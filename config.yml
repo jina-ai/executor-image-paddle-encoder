@@ -1,6 +1,6 @@
-jtype: ImageNormalizer
+jtype: ImagePaddlehubEncoder
 with:
   {}
 metas:
   py_modules:
-    - jinahub.image.normalizer
+    - encoder_paddle.py
