@@ -1,140 +1,96 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Union, Iterable
+from typing import Tuple, Union, Iterable, List, Any
 import numpy as np
 import PIL.Image as Image
 
 from jina import DocumentArray, Executor, requests
 
 
-class ImageNormalizer(Executor):
+def _batch_generator(data: List[Any], batch_size: int):
+    for i in range(0, len(data), batch_size):
+        yield data[i:min(i + batch_size, len(data))]
+
+
+class ImagePaddlehubEncoder(Executor):
     def __init__(
         self,
-        target_size: Union[Iterable[int], int] = 224,
-        img_mean: Tuple[float] = (0, 0, 0),
-        img_std: Tuple[float] = (1, 1, 1),
-        resize_dim: Union[Iterable[int], int] = 256,
-        channel_axis: int = -1,
-        target_channel_axis: int = -1,
+        model_name: str = None,
+        pool_strategy: str = None,
+        channel_axis: int = -3,
+        default_batch_size: int = 32,
+        default_traversal_path: str = 'r',
         *args,
         **kwargs,
     ):
         """Set Constructor."""
         super().__init__(*args, **kwargs)
-        self.target_size = target_size
-        self.resize_dim = resize_dim
-        self.img_mean = np.array(img_mean).reshape((1, 1, 3))
-        self.img_std = np.array(img_std).reshape((1, 1, 3))
+        self.pool_strategy = pool_strategy
         self.channel_axis = channel_axis
-        self.target_channel_axis = target_channel_axis
+        self.model_name = model_name or 'xception71_imagenet'
+        self.pool_strategy = pool_strategy or 'mean'
+        self._default_channel_axis = -3
+        self.inputs_name = None
+        self.outputs_name = None
+        self.default_batch_size = default_batch_size
+        self.default_traversal_path = default_traversal_path
+
+        import paddlehub as hub
+        module = hub.Module(name=self.model_name)
+        inputs, outputs, self.model = module.context(trainable=False)
+        self.get_inputs_and_outputs_name(inputs, outputs)
+
+        import paddle.fluid as fluid
+        self.device = fluid.CUDAPlace(0) if self.on_gpu else fluid.CPUPlace()
+        self.exe = fluid.Executor(self.device)
 
     @requests
-    def craft(self, docs: DocumentArray, **kwargs) -> DocumentArray:
-        filtered_docs = DocumentArray(
-            list(filter(lambda d: 'image/' in d.mime_type, docs))
-        )
-        for doc in filtered_docs:
-            raw_img = self._load_image(doc.blob)
-            _img = self._normalize(raw_img)
-            # move the channel_axis to target_channel_axis to better fit
-            # different models
-            img = self._move_channel_axis(_img, -1, self.target_channel_axis)
-            doc.blob = img
-        return filtered_docs
+    def encode(self, docs: DocumentArray, parameters: dict, **kwargs) -> DocumentArray:
+        if docs:
+            document_batches_generator = self._get_input_data(docs, parameters)
+            self._create_embeddings(document_batches_generator)
 
-    def _normalize(self, img):
-        img = self._resize_short(img)
-        img, _, _ = self._crop_image(img, how='center')
-        img = np.array(img).astype('float32') / 255
-        img -= self.img_mean
-        img /= self.img_std
-        return img
+    def _create_embeddings(self, document_batches_generator: Iterable):
+        for document_batch in document_batches_generator:
+            blob_batch = [d.blob for d in document_batch]
+            if self.channel_axis != self._default_channel_axis:
+                blob_batch = np.moveaxis(blob_batch, self.channel_axis, self._default_channel_axis)
+            feature_map, *_ = self.exe.run(
+                program=self.model,
+                fetch_list=[self.outputs_name],
+                feed={self.inputs_name: blob_batch.astype('float32')},
+                return_numpy=True
+            )
 
-    def _load_image(self, blob: 'np.ndarray'):
-        """
-        Load an image array and return a `PIL.Image` object.
-        """
-        img = self._move_channel_axis(blob, self.channel_axis)
-        return Image.fromarray(img.astype('uint8'))
+            if feature_map.ndim == 2 or self.pool_strategy is None:
+                embedding_batch = feature_map
+            else:
+                embedding_batch = self.get_pooling(feature_map)
 
-    @staticmethod
-    def _move_channel_axis(img: 'np.ndarray', channel_axis_to_move: int,
-                           target_channel_axis: int = -1) -> 'np.ndarray':
-        """
-        Ensure the color channel axis is the default axis.
-        """
-        if channel_axis_to_move == target_channel_axis:
-            return img
-        return np.moveaxis(img, channel_axis_to_move, target_channel_axis)
+            for document, embedding in zip(document_batch, embedding_batch):
+                document.embedding = embedding
 
-    def _crop_image(self, img, top: int = None, left: int = None,
-                    how: str = 'precise'):
-        """
-        Crop the input :py:mod:`PIL` image.
-        :param img: :py:mod:`PIL.Image`, the image to be resized
-        :param target_size: desired output size. If size is a sequence like
-            (h, w), the output size will be matched to this. If size is an int,
-            the output will have the same height and width as the `target_size`.
-        :param top: the vertical coordinate of the top left corner of the crop box.
-        :param left: the horizontal coordinate of the top left corner of the crop box.
-        :param how: the way of cropping. Valid values include `center`, `random`, and, `precise`. Default is `precise`.
-            - `center`: crop the center part of the image
-            - `random`: crop a random part of the image
-            - `precise`: crop the part of the image specified by the crop box with the given ``top`` and ``left``.
-            .. warning:: When `precise` is used, ``top`` and ``left`` must be fed valid value.
-        """
-        assert isinstance(img, Image.Image), 'img must be a PIL.Image'
-        img_w, img_h = img.size
-        if isinstance(self.target_size, int):
-            target_h = target_w = self.target_size
-        elif isinstance(self.target_size, Tuple) and len(self.target_size) == 2:
-            target_h, target_w = self.target_size
-        else:
-            raise ValueError(f'target_size should be an integer or a tuple of '
-                             f'two integers: {self.target_size}')
-        w_beg = left
-        h_beg = top
-        if how == 'center':
-            w_beg = int((img_w - target_w) / 2)
-            h_beg = int((img_h - target_h) / 2)
-        elif how == 'random':
-            w_beg = np.random.randint(0, img_w - target_w + 1)
-            h_beg = np.random.randint(0, img_h - target_h + 1)
-        elif how == 'precise':
-            assert (w_beg is not None and h_beg is not None)
-            assert (0 <= w_beg <= (img_w - target_w)), f'left must be within [0, {img_w - target_w}]: {w_beg}'
-            assert (0 <= h_beg <= (img_h - target_h)), f'top must be within [0, {img_h - target_h}]: {h_beg}'
-        else:
-            raise ValueError(f'unknown input how: {how}')
-        if not isinstance(w_beg, int):
-            raise ValueError(f'left must be int number between 0 and {img_w}: {left}')
-        if not isinstance(h_beg, int):
-            raise ValueError(f'top must be int number between 0 and {img_h}: {top}')
-        w_end = w_beg + target_w
-        h_end = h_beg + target_h
-        img = img.crop((w_beg, h_beg, w_end, h_end))
-        return img, h_beg, w_beg
+    def _get_input_data(self, docs: DocumentArray, parameters: dict):
+        traversal_path = parameters.get('traversal_path', self.default_traversal_path)
+        batch_size = parameters.get('batch_size', self.default_batch_size)
 
-    def _resize_short(self, img, how: str = 'LANCZOS'):
-        """
-        Resize the input :py:mod:`PIL` image.
-        :param img: :py:mod:`PIL.Image`, the image to be resized
-        :param target_size: desired output size. If size is a sequence like (h, w), the output size will be matched to
-            this. If size is an int, the smaller edge of the image will be matched to this number maintain the aspect
-            ratio.
-        :param how: the interpolation method. Valid values include `NEAREST`, `BILINEAR`, `BICUBIC`, and `LANCZOS`.
-            Default is `LANCZOS`. Please refer to `PIL.Image` for detaisl.
-        """
-        assert isinstance(img, Image.Image), 'img must be a PIL.Image'
-        if isinstance(self.resize_dim, int):
-            percent = float(self.resize_dim) / min(img.size[0], img.size[1])
-            target_w = int(round(img.size[0] * percent))
-            target_h = int(round(img.size[1] * percent))
-        elif isinstance(self.resize_dim, Tuple) and len(self.resize_dim) == 2:
-            target_w, target_h = self.resize_dim
-        else:
-            raise ValueError(f'target_size should be an integer or a tuple of two '
-                             f'integers: {self.resize_dim}')
-        img = img.resize((target_w, target_h), getattr(Image, how))
-        return img
+        # traverse thought all documents which have to be processed
+        flat_docs = docs.traverse_flat(traversal_path)
+
+        # filter out documents without images
+        filtered_docs = [doc for doc in flat_docs if doc.blob is not None]
+
+        return _batch_generator(filtered_docs, batch_size)
+
+    def get_pooling(self, content: 'np.ndarray') -> 'np.ndarray':
+        """Get ndarray with selected pooling strategy"""
+        _reduce_axis = tuple((i for i in range(len(content.shape)) if i > 1))
+        return getattr(np, self.pool_strategy)(content, axis=_reduce_axis)
+
+    def get_inputs_and_outputs_name(self, input_dict, output_dict):
+        """Get inputs_name (image name) and outputs_name (feature map)."""
+        self.inputs_name = input_dict['image'].name
+        self.outputs_name = output_dict['feature_map'].name
+        if self.model_name.startswith('vgg') or self.model_name.startswith('alexnet'):
+            self.outputs_name = f'@HUB_{self.model_name}@fc_1.tmp_2'
