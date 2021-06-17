@@ -1,4 +1,6 @@
-# CI testing script
+#!/bin/bash
+# find all the examples with changed code
+# run the tests in that directory
 
 sudo apt-get update && sudo apt-get install python3-venv
 
