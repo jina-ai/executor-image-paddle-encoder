@@ -12,8 +12,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    py_modules=['jinahub.image.encoder'],
-    package_dir={'jinahub.image': '.'},
+    py_modules=['jinahub.encoder.paddle_image'],
+    package_dir={'jinahub.encoder': '.'},
     install_requires=open("requirements.txt").readlines(),
     python_requires=">=3.7",
 )
