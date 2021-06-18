@@ -21,6 +21,7 @@ class ImagePaddlehubEncoder(Executor):
         channel_axis: int = -3,
         default_batch_size: int = 32,
         default_traversal_path: str = 'r',
+        on_gpu: bool = False,
         *args,
         **kwargs,
     ):
@@ -33,6 +34,7 @@ class ImagePaddlehubEncoder(Executor):
         self._default_channel_axis = -3
         self.inputs_name = None
         self.outputs_name = None
+        self.on_gpu = on_gpu
         self.default_batch_size = default_batch_size
         self.default_traversal_path = default_traversal_path
 
