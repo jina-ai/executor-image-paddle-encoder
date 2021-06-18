@@ -2,9 +2,7 @@ import os
 from typing import Dict
 
 import numpy as np
-import pytest
 from jina import DocumentArray, Document
-from jina.executors.metas import get_default_metas
 from jinahub.encoder.paddle_image import ImagePaddlehubEncoder
 
 directory = os.path.dirname(os.path.realpath(__file__))
@@ -25,7 +23,8 @@ def test_imagepaddlehubencoder_encode(test_images: Dict[str, np.array]):
     for name, image_arr in test_images.items():
         docs = DocumentArray([Document(blob=image_arr)])
         encoder.encode(docs, parameters={})
-        embeddings[name] = docs[0].blob
+        embeddings[name] = docs[0].embedding
+    print(embeddings)
 
     def dist(a, b):
         a_embedding = embeddings[a]

@@ -4,13 +4,9 @@ __license__ = "Apache-2.0"
 import os
 from typing import Dict
 
-import pytest
-#import torch
 import numpy as np
-#from torchvision.models.mobilenet import model_urls
+import pytest
 from PIL import Image
-from glob import glob
-
 from jina import DocumentArray, Document
 
 

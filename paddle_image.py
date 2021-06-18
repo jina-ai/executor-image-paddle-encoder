@@ -85,6 +85,7 @@ class ImagePaddlehubEncoder(Executor):
     def _create_embeddings(self, document_batches_generator: Iterable):
         for document_batch in document_batches_generator:
             blob_batch = [d.blob for d in document_batch]
+            blob_batch = np.array(blob_batch)
             if self.channel_axis != self._default_channel_axis:
                 blob_batch = np.moveaxis(blob_batch, self.channel_axis, self._default_channel_axis)
             feature_map, *_ = self.exe.run(
