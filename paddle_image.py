@@ -41,6 +41,9 @@ class ImagePaddlehubEncoder(Executor):
         ``densenet121_imagenet``, ``darknet53_imagenet``, ``alexnet_imagenet``,
     :param pool_strategy: the pooling strategy. Default is `None`.
     :param channel_axis: The axis of the color channel, default is -3
+    :param default_batch_size: size of each batch
+    :param default_traversal_path: traversal path of the Documents, (e.g. 'r', 'c')
+    :param on_gpu: set to True if using GPU
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """

@@ -3,14 +3,10 @@ __license__ = "Apache-2.0"
 
 from typing import List
 
-import pytest
-
-from jinahub.encoder.paddle_image import ImagePaddlehubEncoder
-# from paddle_image import ImagePaddlehubEncoder
-
-from jina import Flow, Document, DocumentArray
-
 import numpy as np
+import pytest
+from jina import Flow, Document, DocumentArray
+from jinahub.encoder.paddle_image import ImagePaddlehubEncoder
 
 
 @pytest.mark.parametrize('arr_in', [

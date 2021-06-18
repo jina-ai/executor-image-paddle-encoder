@@ -7,7 +7,6 @@ from jinahub.encoder.paddle_image import ImagePaddlehubEncoder
 
 directory = os.path.dirname(os.path.realpath(__file__))
 
-
 input_dim = 224
 target_output_dim = 2048
 num_doc = 2
@@ -16,7 +15,6 @@ tmp_files = []
 
 
 def test_imagepaddlehubencoder_encode(test_images: Dict[str, np.array]):
-
     encoder = ImagePaddlehubEncoder(channel_axis=3)
 
     embeddings = {}
