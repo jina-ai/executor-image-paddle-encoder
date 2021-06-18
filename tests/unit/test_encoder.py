@@ -1,12 +1,11 @@
-import pytest
 import os
+from typing import Dict
+
 import numpy as np
-from PIL.Image import Image
-from typing import Tuple, Dict
+import pytest
 from jina import DocumentArray, Document
 from jina.executors.metas import get_default_metas
 from jinahub.encoder.paddle_image import ImagePaddlehubEncoder
-#from paddle_image import ImagePaddlehubEncoder
 
 directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -16,15 +15,6 @@ target_output_dim = 2048
 num_doc = 2
 test_data = np.random.rand(num_doc, 3, input_dim, input_dim)
 tmp_files = []
-
-
-@pytest.fixture(scope='function', autouse=True)
-def metas(tmpdir):
-    metas = get_default_metas()
-    if 'JINA_TEST_GPU' in os.environ:
-        metas['on_gpu'] = True
-    metas['workspace'] = str(tmpdir)
-    yield metas
 
 
 def test_imagepaddlehubencoder_encode(test_images: Dict[str, np.array]):

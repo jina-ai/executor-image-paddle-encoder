@@ -7,7 +7,7 @@ setuptools.setup(
     author='Jina Dev Team',
     author_email='dev-team@jina.ai',
     description="Executor that encodes images",
-    url="https://github.com/jina-ai/executor-image-normalizer",
+    url="https://github.com/jina-ai/executor-image-paddle-encoder",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",

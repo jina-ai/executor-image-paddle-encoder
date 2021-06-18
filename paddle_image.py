@@ -1,10 +1,9 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Union, Iterable, List, Any
-import numpy as np
-import PIL.Image as Image
+from typing import Optional, Iterable, List, Any
 
+import numpy as np
 from jina import DocumentArray, Executor, requests
 
 
@@ -14,18 +13,48 @@ def _batch_generator(data: List[Any], batch_size: int):
 
 
 class ImagePaddlehubEncoder(Executor):
+    """
+    :class:`ImagePaddlehubEncoder` encodes ``Document`` content from a ndarray,
+    potentially B x (Channel x Height x Width) into a ndarray of `B x D`.
+
+    Internally, :class:`ImagePaddlehubEncoder` wraps the models from `paddlehub`.
+    https://github.com/PaddlePaddle/PaddleHub
+
+    :param model_name: the name of the model. Supported models include
+        ``xception71_imagenet``, ``xception65_imagenet``, ``xception41_imagenet``,
+        ``vgg19_imagenet``, ``vgg16_imagenet``, ``vgg13_imagenet``, ``vgg11_imagenet``,
+        ``shufflenet_v2_imagenet``,``se_resnext50_32x4d_imagenet``,
+        ``se_resnext101_32x4d_imagenet``,  ``resnext50_vd_64x4d_imagenet``,
+        ``resnext50_vd_32x4d_imagenet``, `resnext50_64x4d_imagenet``,
+        ``resnext50_32x4d_imagenet``, ``resnext152_vd_64x4d_imagenet``,
+        ``resnext152_64x4d_imagenet``, ``resnext152_32x4d_imagenet``,
+        ``resnext101_vd_64x4d_imagenet``, ``resnext101_vd_32x4d_imagenet``,
+        ``resnext101_32x8d_wsl``, ``resnext101_32x48d_wsl``, ``resnext101_32x32d_wsl``,
+        ``resnext101_32x16d_wsl``, ``resnet_v2_50_imagenet``, ``resnet_v2_34_imagenet``,
+        ``resnet_v2_18_imagenet``, ``resnet_v2_152_imagenet``, ``resnet_v2_101_imagenet``,
+        ``mobilenet_v2_imagenet``, ``inception_v4_imagenet``, ``googlenet_imagenet``,
+        ``efficientnetb7_imagenet``, ``efficientnetb6_imagenet``, ``efficientnetb5_imagenet``,
+        ``efficientnetb4_imagenet``, ``efficientnetb3_imagenet``, ``efficientnetb2_imagenet``,
+        ``efficientnetb1_imagenet``, ``efficientnetb0_imagenet``, ``dpn68_imagenet``,
+        ``dpn131_imagenet``, ``dpn107_imagenet``, ``densenet264_imagenet``,
+        ``densenet201_imagenet``, ``densenet169_imagenet``, ``densenet161_imagenet``,
+        ``densenet121_imagenet``, ``darknet53_imagenet``, ``alexnet_imagenet``,
+    :param pool_strategy: the pooling strategy. Default is `None`.
+    :param channel_axis: The axis of the color channel, default is -3
+    :param args:  Additional positional arguments
+    :param kwargs: Additional keyword arguments
+    """
     def __init__(
-        self,
-        model_name: str = None,
-        pool_strategy: str = None,
-        channel_axis: int = -3,
-        default_batch_size: int = 32,
-        default_traversal_path: str = 'r',
-        on_gpu: bool = False,
-        *args,
-        **kwargs,
+            self,
+            model_name: Optional[str] = None,
+            pool_strategy: Optional[str] = None,
+            channel_axis: int = -3,
+            default_batch_size: int = 32,
+            default_traversal_path: str = 'r',
+            on_gpu: bool = False,
+            *args,
+            **kwargs,
     ):
-        """Set Constructor."""
         super().__init__(*args, **kwargs)
         self.pool_strategy = pool_strategy
         self.channel_axis = channel_axis
@@ -68,7 +97,7 @@ class ImagePaddlehubEncoder(Executor):
             if feature_map.ndim == 2 or self.pool_strategy is None:
                 embedding_batch = feature_map
             else:
-                embedding_batch = self.get_pooling(feature_map)
+                embedding_batch = self._get_pooling(feature_map)
 
             for document, embedding in zip(document_batch, embedding_batch):
                 document.embedding = embedding
@@ -85,7 +114,7 @@ class ImagePaddlehubEncoder(Executor):
 
         return _batch_generator(filtered_docs, batch_size)
 
-    def get_pooling(self, content: 'np.ndarray') -> 'np.ndarray':
+    def _get_pooling(self, content: 'np.ndarray') -> 'np.ndarray':
         """Get ndarray with selected pooling strategy"""
         _reduce_axis = tuple((i for i in range(len(content.shape)) if i > 1))
         return getattr(np, self.pool_strategy)(content, axis=_reduce_axis)

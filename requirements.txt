@@ -1,6 +1,6 @@
 jina==2.0.0rc6
-Pillow
-numpy
 paddlehub==1.8.2
 paddlepaddle==1.8.5
 six==1.15.0
+Pillow
+numpy

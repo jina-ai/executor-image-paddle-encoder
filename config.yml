@@ -3,4 +3,4 @@ with:
   {}
 metas:
   py_modules:
-    - encoder_paddle.py
+    - paddle_image.py
