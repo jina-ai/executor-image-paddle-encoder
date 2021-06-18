@@ -41,7 +41,7 @@ class ImagePaddlehubEncoder(Executor):
         import paddlehub as hub
         module = hub.Module(name=self.model_name)
         inputs, outputs, self.model = module.context(trainable=False)
-        self.get_inputs_and_outputs_name(inputs, outputs)
+        self._get_inputs_and_outputs_name(inputs, outputs)
 
         import paddle.fluid as fluid
         self.device = fluid.CUDAPlace(0) if self.on_gpu else fluid.CPUPlace()
@@ -90,7 +90,7 @@ class ImagePaddlehubEncoder(Executor):
         _reduce_axis = tuple((i for i in range(len(content.shape)) if i > 1))
         return getattr(np, self.pool_strategy)(content, axis=_reduce_axis)
 
-    def get_inputs_and_outputs_name(self, input_dict, output_dict):
+    def _get_inputs_and_outputs_name(self, input_dict, output_dict):
         """Get inputs_name (image name) and outputs_name (feature map)."""
         self.inputs_name = input_dict['image'].name
         self.outputs_name = output_dict['feature_map'].name

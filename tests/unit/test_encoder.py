@@ -5,8 +5,8 @@ from PIL.Image import Image
 from typing import Tuple, Dict
 from jina import DocumentArray, Document
 from jina.executors.metas import get_default_metas
-#from jinahub.encoder.paddle_image import ImagePaddlehubEncoder
-from paddle_image import ImagePaddlehubEncoder
+from jinahub.encoder.paddle_image import ImagePaddlehubEncoder
+#from paddle_image import ImagePaddlehubEncoder
 
 directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -51,22 +51,3 @@ def test_imagepaddlehubencoder_encode(test_images: Dict[str, np.array]):
     assert small_distance < dist('banana2', 'studio')
     assert small_distance < dist('airplane', 'studio')
     assert small_distance < dist('airplane', 'satellite')
-
-'''
-
-def test_imagepaddlehubencoder_save_and_load(metas):
-    encoder = ImagePaddlehubEncoder(metas=metas)
-    encoder.touch()
-    encoder.save()
-    assert os.path.exists(encoder.save_abspath)
-    encoder_loaded = BaseExecutor.load(encoder.save_abspath)
-    assert encoder_loaded.model_name == encoder.model_name
-
-
-def test_imagepaddlehubencoder_save_and_load_config(metas):
-    encoder = ImagePaddlehubEncoder(metas=metas)
-    encoder.save_config()
-    assert os.path.exists(encoder.config_abspath)
-    encoder_loaded = BaseExecutor.load_config(encoder.config_abspath)
-    assert encoder_loaded.model_name == encoder.model_name
-'''
