@@ -16,6 +16,9 @@ Here is an example usage of the clip encoder.
         'with': {
             'default_batch_size': 32,
             'model_name': 'xception71_imagenet',
+        },
+        'metas': {
+            'py_modules': ['paddle_image.py']
         }
     })
     with f:

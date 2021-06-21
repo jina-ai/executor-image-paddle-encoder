@@ -22,7 +22,6 @@ def test_imagepaddlehubencoder_encode(test_images: Dict[str, np.array]):
         docs = DocumentArray([Document(blob=image_arr)])
         encoder.encode(docs, parameters={})
         embeddings[name] = docs[0].embedding
-    print(embeddings)
 
     def dist(a, b):
         a_embedding = embeddings[a]

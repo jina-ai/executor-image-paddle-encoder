@@ -1,10 +1,8 @@
 manifest_version: 1
 name: ImagePaddlehubEncoder
-kind: encoder
+alias: paddle_image_encoder
 description: ImagePaddlehubEncoder encodes image data.
 author: Jina AI Dev-Team (dev-team@jina.ai)
 url: https://jina.ai
-vendor: Jina AI Limited
-version: 0.0.1
-license: apache-2.0
+avatar: https://avatars.githubusercontent.com/u/60539444?s=200&v=4
 keywords: [Imagenet, PaddleHub, Computer Vision, image, encoder]
