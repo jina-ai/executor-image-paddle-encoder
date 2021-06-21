@@ -15,34 +15,29 @@ from jinahub.encoder.paddle_image import ImagePaddlehubEncoder
     (np.ones((3, 50, 40), dtype=np.float32))
 ])
 def test_paddle_no_batch(arr_in: np.ndarray):
-    def validate_callback(resp):
-        results_arr = DocumentArray(resp.data.docs)
-        assert len(results_arr) == 1
-        assert results_arr[0].embedding is not None
-        assert results_arr[0].embedding.shape == (2048,)
-
     flow = Flow().add(uses=ImagePaddlehubEncoder)
     with flow:
-        flow.post(
+        results = flow.post(
             on='/test',
             inputs=DocumentArray([Document(blob=arr_in)]),
-            on_done=validate_callback
+            return_results=True
         )
+
+        assert len(results[0].docs) == 1
+        assert results[0].docs[0].embedding.shape == (2048,)
 
 
 def test_paddle_batch():
-    def validate_callback(resp):
-        assert len(resp.docs.get_attributes('embedding')) ==25
-        assert resp.docs.get_attributes('embedding')[0].shape == (2048,)
-
     flow = Flow().add(uses=ImagePaddlehubEncoder)
 
     with flow:
-        flow.post(
+        results = flow.post(
             on='/test',
             inputs=(Document(blob=np.ones((3, 224, 224), dtype=np.float32)) for _ in range(25)),
-            on_done=validate_callback
+            return_results=True
         )
+        assert len(results[0].docs.get_attributes('embedding')) == 25
+        assert results[0].docs.get_attributes('embedding')[0].shape == (2048,)
 
 
 @pytest.mark.parametrize(
@@ -54,17 +49,13 @@ def test_paddle_batch():
     ]
 )
 def test_traversal_path(docs: DocumentArray, docs_per_path: List[List[str]], traversal_paths: str):
-    def validate_traversal(expected_docs_per_path: List[List[str]]):
-        def validate(resp):
-            for path, count in expected_docs_per_path:
-                assert len(DocumentArray(resp.data.docs).traverse_flat([path]).get_attributes('embedding')) == count
-        return validate
-
     flow = Flow().add(uses=ImagePaddlehubEncoder)
     with flow:
-        flow.post(
+        results = flow.post(
             on='/test',
             inputs=docs,
-            on_done=validate_traversal(docs_per_path),
-            parameters={'traversal_paths': [traversal_paths]}
+            parameters={'traversal_paths': [traversal_paths]},
+            return_results=True
         )
+        for path, count in docs_per_path:
+            assert len(DocumentArray(results[0].docs).traverse_flat([path]).get_attributes('embedding')) == count
