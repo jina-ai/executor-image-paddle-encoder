@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Optional, Iterable, List, Any
+from typing import Union, Iterable, List, Any
 
 import numpy as np
 from jina import DocumentArray, Executor, requests
@@ -42,7 +42,7 @@ class ImagePaddlehubEncoder(Executor):
     :param pool_strategy: the pooling strategy. Default is `None`.
     :param channel_axis: The axis of the color channel, default is -3
     :param default_batch_size: size of each batch
-    :param default_traversal_path: traversal path of the Documents, (e.g. 'r', 'c')
+    :param default_traversal_paths: traversal path of the Documents, (e.g. 'r', 'c')
     :param on_gpu: set to True if using GPU
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
@@ -53,7 +53,7 @@ class ImagePaddlehubEncoder(Executor):
             pool_strategy: str = 'mean',
             channel_axis: int = -3,
             default_batch_size: int = 32,
-            default_traversal_path: str = 'r',
+            default_traversal_paths: Union[str, List[str]] = 'r',
             on_gpu: bool = False,
             *args,
             **kwargs,
@@ -67,7 +67,7 @@ class ImagePaddlehubEncoder(Executor):
         self.outputs_name = None
         self.on_gpu = on_gpu
         self.default_batch_size = default_batch_size
-        self.default_traversal_path = default_traversal_path
+        self.default_traversal_paths = default_traversal_paths
 
         import paddlehub as hub
         module = hub.Module(name=self.model_name)
@@ -106,11 +106,11 @@ class ImagePaddlehubEncoder(Executor):
                 document.embedding = embedding
 
     def _get_input_data(self, docs: DocumentArray, parameters: dict):
-        traversal_path = parameters.get('traversal_path', self.default_traversal_path)
+        traversal_paths = parameters.get('traversal_paths', self.default_traversal_paths)
         batch_size = parameters.get('batch_size', self.default_batch_size)
 
         # traverse thought all documents which have to be processed
-        flat_docs = docs.traverse_flat(traversal_path)
+        flat_docs = docs.traverse_flat(traversal_paths)
 
         # filter out documents without images
         filtered_docs = [doc for doc in flat_docs if doc.blob is not None]
