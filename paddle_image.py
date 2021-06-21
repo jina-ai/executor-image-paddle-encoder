@@ -49,8 +49,8 @@ class ImagePaddlehubEncoder(Executor):
     """
     def __init__(
             self,
-            model_name: Optional[str] = None,
-            pool_strategy: Optional[str] = None,
+            model_name: str = 'xception71_imagenet',
+            pool_strategy: str = 'mean',
             channel_axis: int = -3,
             default_batch_size: int = 32,
             default_traversal_path: str = 'r',
@@ -61,8 +61,7 @@ class ImagePaddlehubEncoder(Executor):
         super().__init__(*args, **kwargs)
         self.pool_strategy = pool_strategy
         self.channel_axis = channel_axis
-        self.model_name = model_name or 'xception71_imagenet'
-        self.pool_strategy = pool_strategy or 'mean'
+        self.model_name = model_name
         self._default_channel_axis = -3
         self.inputs_name = None
         self.outputs_name = None
