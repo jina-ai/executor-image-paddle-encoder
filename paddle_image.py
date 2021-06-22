@@ -72,14 +72,14 @@ class ImagePaddlehubEncoder(Executor):
         import paddlehub as hub
         module = hub.Module(name=self.model_name)
         inputs, outputs, self.model = module.context(trainable=False)
-        self._get_inputs_and_outputs_name(inputs, outputs)
+        self.inputs_name, self.outputs_name = self._get_inputs_and_outputs_name(inputs, outputs)
 
         import paddle.fluid as fluid
         self.device = fluid.CUDAPlace(0) if self.on_gpu else fluid.CPUPlace()
         self.exe = fluid.Executor(self.device)
 
     @requests
-    def encode(self, docs: DocumentArray, parameters: dict, **kwargs) -> DocumentArray:
+    def encode(self, docs: DocumentArray, parameters: dict, **kwargs):
         if docs:
             document_batches_generator = self._get_input_data(docs, parameters)
             self._create_embeddings(document_batches_generator)
@@ -124,7 +124,8 @@ class ImagePaddlehubEncoder(Executor):
 
     def _get_inputs_and_outputs_name(self, input_dict, output_dict):
         """Get inputs_name (image name) and outputs_name (feature map)."""
-        self.inputs_name = input_dict['image'].name
-        self.outputs_name = output_dict['feature_map'].name
+        inputs_name = input_dict['image'].name
+        outputs_name = output_dict['feature_map'].name
         if self.model_name.startswith('vgg') or self.model_name.startswith('alexnet'):
-            self.outputs_name = f'@HUB_{self.model_name}@fc_1.tmp_2'
+            outputs_name = f'@HUB_{self.model_name}@fc_1.tmp_2'
+        return inputs_name, outputs_name
