@@ -9,7 +9,7 @@ from jina import DocumentArray, Executor, requests
 
 def _batch_generator(data: List[Any], batch_size: int):
     for i in range(0, len(data), batch_size):
-        yield data[i:min(i + batch_size, len(data))]
+        yield data[i:i + batch_size]
 
 
 class ImagePaddlehubEncoder(Executor):
@@ -47,6 +47,7 @@ class ImagePaddlehubEncoder(Executor):
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """
+
     def __init__(
             self,
             model_name: str = 'xception71_imagenet',
