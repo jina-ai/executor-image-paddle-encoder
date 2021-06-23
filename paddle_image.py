@@ -54,7 +54,7 @@ class ImagePaddlehubEncoder(Executor):
             pool_strategy: str = 'mean',
             channel_axis: int = -3,
             default_batch_size: int = 32,
-            default_traversal_paths: List[str] = 'r',
+            default_traversal_paths: List[str] = ['r'],
             on_gpu: bool = False,
             *args,
             **kwargs,
