@@ -71,7 +71,7 @@ pods:
 	docker build -t executor-image-paddle-encoder .
 	```
 
-1. Use `my-dummy-executor-image` in your codes
+1. Use `executor-image-paddle-encoder` in your codes
 
 	```python
 	from jina import Flow
