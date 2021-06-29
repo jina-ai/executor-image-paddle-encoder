@@ -10,9 +10,9 @@ from jinahub.encoder.paddle_image import ImagePaddlehubEncoder
 
 
 @pytest.mark.parametrize('arr_in', [
-    (np.ones((3, 224, 224), dtype=np.float32)),
-    (np.ones((3, 100, 100), dtype=np.float32)),
-    (np.ones((3, 50, 40), dtype=np.float32))
+    (np.ones((224, 224, 3), dtype=np.float32)),
+    (np.ones((100, 100, 3), dtype=np.float32)),
+    (np.ones((50, 40, 3), dtype=np.float32))
 ])
 def test_paddle_no_batch(arr_in: np.ndarray):
     flow = Flow().add(uses=ImagePaddlehubEncoder)
@@ -33,7 +33,7 @@ def test_paddle_batch():
     with flow:
         results = flow.post(
             on='/test',
-            inputs=(Document(blob=np.ones((3, 224, 224), dtype=np.float32)) for _ in range(25)),
+            inputs=(Document(blob=np.ones((224, 224, 3), dtype=np.float32)) for _ in range(25)),
             return_results=True
         )
         assert len(results[0].docs.get_attributes('embedding')) == 25

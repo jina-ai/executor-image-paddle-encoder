@@ -52,7 +52,7 @@ class ImagePaddlehubEncoder(Executor):
             self,
             model_name: str = 'xception71_imagenet',
             pool_strategy: str = 'mean',
-            channel_axis: int = 3,
+            channel_axis: int = -1,
             default_batch_size: int = 32,
             default_traversal_paths: List[str] = ['r'],
             on_gpu: bool = False,

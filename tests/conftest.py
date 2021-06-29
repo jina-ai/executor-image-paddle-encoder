@@ -18,7 +18,7 @@ def test_dir() -> str:
 @pytest.fixture()
 def docs_with_blobs() -> DocumentArray:
     return DocumentArray([
-        Document(blob=np.ones((3, 10, 10), dtype=np.float32)) for _ in range(10)
+        Document(blob=np.ones((10, 10, 3), dtype=np.float32)) for _ in range(10)
     ])
 
 
@@ -26,7 +26,7 @@ def docs_with_blobs() -> DocumentArray:
 def docs_with_chunk_blobs() -> DocumentArray:
     return DocumentArray([
         Document(
-            chunks=[Document(blob=np.ones((3, 10, 10), dtype=np.float32))]) for _ in range(10)
+            chunks=[Document(blob=np.ones((10, 10, 3), dtype=np.float32))]) for _ in range(10)
     ])
 
 
@@ -35,7 +35,7 @@ def docs_with_chunk_chunk_blobs() -> DocumentArray:
     return DocumentArray([
         Document(
             chunks=[Document(
-                chunks=[Document(blob=np.ones((3, 10, 10), dtype=np.float32)) for _ in range(10)])])
+                chunks=[Document(blob=np.ones((10, 10, 3), dtype=np.float32)) for _ in range(10)])])
     ])
 
 
