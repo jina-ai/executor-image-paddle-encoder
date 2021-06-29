@@ -1,6 +1,6 @@
 manifest_version: 1
 name: ImagePaddlehubEncoder
-alias: paddle_image_encoder
+alias: ImagePaddlehubEncoder
 description: ImagePaddlehubEncoder encodes image data.
 author: Jina AI Dev-Team (dev-team@jina.ai)
 url: https://jina.ai
