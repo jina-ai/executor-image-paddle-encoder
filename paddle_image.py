@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Union, Iterable, List, Any, Optional
+from typing import Union, Iterable, List, Any, Optional, Tuple
 
 import numpy as np
 from jina import DocumentArray, Executor, requests
@@ -50,7 +50,7 @@ class ImagePaddlehubEncoder(Executor):
             pool_strategy: str = 'mean',
             channel_axis: int = -3,
             default_batch_size: int = 32,
-            default_traversal_paths: Optional[List[str]] = None,
+            default_traversal_paths: Tuple[str] = ('r', ),
             on_gpu: bool = False,
             *args,
             **kwargs,
@@ -64,7 +64,7 @@ class ImagePaddlehubEncoder(Executor):
         self.outputs_name = None
         self.on_gpu = on_gpu
         self.default_batch_size = default_batch_size
-        self.default_traversal_paths = default_traversal_paths or ['r']
+        self.default_traversal_paths = default_traversal_paths
 
         import paddlehub as hub
         module = hub.Module(name=self.model_name)
